@@ -1,0 +1,26 @@
+# Virtual environment
+myenv/
+venv/
+env/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Trained ML models (large binary files — retrain from train_models.py)
+*.joblib
+*.pkl
+
+# Django
+db.sqlite3
+*.sqlite3
+
+# Environment variables (contains secrets)
+.env
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

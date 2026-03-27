@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Weather forecast dashboard with temperature and humidity charts">
+    <title>{% if city %}{{ city }} Weather Forecast{% else %}Weather Forecast{% endif %}</title>
+    <link rel="icon" href="{% static 'img/site-pic.ico' %}" type="image/x-icon">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+
+<body>
+    <main class="{{ description|lower|default:'clear' }}">
+        <!-- Sidebar / Search -->
+        <aside class="side-container">
+            {% if error_message %}
+                <div class="error-message">
+                    <p>{{ error_message }}</p>
+                </div>
+            {% endif %}
+            <form method="POST" aria-label="Search City" novalidate>
+                {% csrf_token %}
+                <div class="search-container">
+                    <label for="city-input" class="visually-hidden">Enter city name</label>
+                    <i class="bi bi-cloud-haze weather-icon" aria-hidden="true"></i>
+                    <input type="text" 
+                           id="city-input" 
+                           name="city" 
+                           class="geo-input" 
+                           placeholder="e.g., London, New York"
+                           value="{{ location|default:'' }}" 
+                           aria-label="Enter city for weather search"
+                           autocomplete="address-level2"
+                           required>
+                    <button type="submit" class="search-button" aria-label="Search weather">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </form>
+
+            <section class="day-stats" aria-label="Current Weather Conditions">
+                <h2 class="day-stats_temperature" aria-label="Current temperature">
+                    <span class="day-stats_temperature_value">{{ current_temp|default:'--' }}</span>
+                </h2>
+                <h3 class="day-stats_feelslike">
+                    Feels like <span class="day-stats_feelslike_value">{{ feels_like|default:'--' }}</span>
+                </h3>
+                <ul class="day-stats_conditions" role="list">
+                    <li>
+                        <span class="day-stats_conditions_text">{{ humidity|default:'--' }}</span>
+                        <span class="day-stats_conditions_text">Humidity</span>
+                    </li>
+                    <li>
+                        <span class="day-stats_conditions_text">{{ clouds|default:'--' }}</span>
+                        <span class="day-stats_conditions_text">Clouds</span>
+                    </li>
+                </ul>
+            </section>
+        </aside>
+
+        <!-- Main Content -->
+        <section class="main-container">
+            <header class="weather-header">
+                <h4 class="secondary-title">Weather Forecast</h4>
+                <h1 class="weather_primary-title">{{ description|title|default:'Weather Data' }}</h1>
+                <div class="weather_location">
+                    <i class="bi bi-geo-alt location-icon" aria-hidden="true"></i>
+                    <div class="weather_location-text">
+                        <span class="weather_location-city">{{ city|default:'Unknown' }}</span>{% if country %},
+                        <span class="weather_location-country">{{ country }}</span>{% endif %}
+                        {% if time %}<time datetime="{{ time }}" class="weather_time">{{ time }}</time>{% endif %}
+                    </div>
+                </div>
+            </header>
+
+            <div class="weather_primary-stats">
+                <span>Wind {{ wind|default:'--' }}</span> ·
+                <span>Pressure {{ pressure|default:'--' }}</span> ·
+                <span>Visibility {{ visibility|default:'--' }}</span> ·
+                <span>Max {{ MaxTemp|default:'--' }}</span> ·
+                <span>Min {{ MinTemp|default:'--' }}</span>
+            </div>
+
+            <!-- Hourly Forecast -->
+            <section class="forecast-section" aria-label="5-Hour Forecast">
+                <ul class="forecast" role="list">
+                    {% for forecast in hourly_forecasts %}
+                        <li class="forecast-item">
+                            <p class="forecast-time">{{ forecast.time }}</p>
+                            <p class="forecast-temperature">
+                                <span class="forecast-temperatureValue">{{ forecast.temp }}</span>°C
+                            </p>
+                            <p class="forecastWindText">
+                                Humidity: <span class="forecast-humidityValue">{{ forecast.hum }}</span>%
+                            </p>
+                        </li>
+                    {% empty %}
+                        <p>No forecast data available.</p>
+                    {% endfor %}
+                </ul>
+            </section>
+
+            <!-- Rain Prediction -->
+            <div class="rain-chance" role="region" aria-label="Rain Prediction">
+                <p>Rain Tomorrow: <strong>{{ rain_prediction|default:'Unknown' }}</strong></p>
+            </div>
+
+            <!-- Temperature and Humidity Chart -->
+            <div class="chart-wrapper" role="region" aria-label="Temperature and Humidity Trends">
+                <canvas id="chart" 
+                        role="img"
+                        aria-label="Interactive chart showing temperature and humidity trends over the next 5 hours">
+                    <!-- Fallback content for browsers that don't support canvas -->
+                    <div class="chart-fallback">
+                        <p>Chart not supported. Weather data:</p>
+                        <ul>
+                            {% for forecast in hourly_forecasts %}
+                                <li>{{ forecast.time }}: {{ forecast.temp }}°C, {{ forecast.hum }}% humidity</li>
+                            {% empty %}
+                                <li>No forecast data available.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </canvas>
+            </div>
+        </section>
+    </main>
+
+    {{ hourly_forecasts|json_script:"forecast-data" }}
+
+    <!-- Scripts with error handling -->
+    <script>
+        // Fallback for Chart.js loading failure
+        window.chartJsLoaded = false;
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!window.Chart) {
+                console.warn('Chart.js failed to load');
+                const chartWrapper = document.querySelector('.chart-wrapper');
+                if (chartWrapper) {
+                    chartWrapper.innerHTML = '<div class="chart-error"><p>Chart library failed to load. Please refresh the page.</p></div>';
+                }
+            } else {
+                window.chartJsLoaded = true;
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js" defer onload="window.chartJsLoaded = true;"></script>
+    <script src="{% static 'js/chartSetup.js' %}" defer></script>
+</body>
+
+</html>
