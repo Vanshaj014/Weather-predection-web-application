@@ -15,7 +15,7 @@
 </head>
 
 <body>
-    <main class="{{ description|lower|default:'clear' }}">
+    <main class="{{ css_class|default:'clear' }}">
         <!-- Sidebar / Search -->
         <aside class="side-container">
             {% if error_message %}
@@ -107,7 +107,16 @@
 
             <!-- Rain Prediction -->
             <div class="rain-chance" role="region" aria-label="Rain Prediction">
-                <p>Rain Tomorrow: <strong>{{ rain_prediction|default:'Unknown' }}</strong></p>
+                {% if rain_probability is not None %}
+                    <div class="rain-badge
+                        {% if rain_probability >= 70 %}rain-badge--high
+                        {% elif rain_probability >= 30 %}rain-badge--moderate
+                        {% else %}rain-badge--low{% endif %}">
+                        <i class="bi bi-cloud-rain-fill" aria-hidden="true"></i>
+                        <span class="rain-badge__label">Rain tomorrow</span>
+                        <span class="rain-badge__value">{{ rain_probability }}%</span>
+                    </div>
+                {% endif %}
             </div>
 
             <!-- Temperature and Humidity Chart -->
@@ -131,10 +140,25 @@
         </section>
     </main>
 
+    <!-- Loading overlay — shown on form submit -->
+    <div id="loading-overlay" class="loading-overlay" aria-hidden="true" role="status">
+        <div class="loading-overlay__spinner"></div>
+        <p class="loading-overlay__text">Fetching weather data&hellip;</p>
+    </div>
+
     {{ hourly_forecasts|json_script:"forecast-data" }}
 
-    <!-- Scripts with error handling -->
+    <!-- Scripts -->
     <script>
+        // Activate loading overlay on form submit
+        document.querySelector('form').addEventListener('submit', function () {
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.add('loading-overlay--active');
+                overlay.setAttribute('aria-hidden', 'false');
+            }
+        });
+
         // Fallback for Chart.js loading failure
         window.chartJsLoaded = false;
         document.addEventListener('DOMContentLoaded', () => {

@@ -572,3 +572,103 @@ main.clear { background-image: url('../img/clear.jpeg'); }
         display: none;
     }
 }
+
+/* ── Loading Overlay ──────────────────────────────────────────────────────── */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    background: rgba(8, 8, 0, 0.82);
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+
+.loading-overlay--active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.loading-overlay__spinner {
+    width: 52px;
+    height: 52px;
+    border: 4px solid rgba(255, 255, 255, 0.2);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+.loading-overlay__text {
+    font-size: var(--font-size-base);
+    color: var(--text-secondary);
+    letter-spacing: 0.03em;
+}
+
+/* ── Rain Probability Badge ───────────────────────────────────────────────── */
+.rain-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: 999px;          /* pill shape */
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    border: 1px solid transparent;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.rain-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.rain-badge i {
+    font-size: var(--font-size-lg);
+}
+
+.rain-badge__label {
+    opacity: 0.85;
+}
+
+.rain-badge__value {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    margin-left: var(--spacing-xs);
+}
+
+/* Low chance  ≤ 29% — green */
+.rain-badge--low {
+    background: rgba(46, 213, 115, 0.18);
+    border-color: rgba(46, 213, 115, 0.45);
+    color: #2ed573;
+}
+
+/* Moderate chance 30–69% — amber */
+.rain-badge--moderate {
+    background: rgba(255, 165, 2, 0.18);
+    border-color: rgba(255, 165, 2, 0.45);
+    color: #ffa502;
+}
+
+/* High chance ≥ 70% — red */
+.rain-badge--high {
+    background: rgba(255, 71, 87, 0.18);
+    border-color: rgba(255, 71, 87, 0.45);
+    color: #ff4757;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .loading-overlay {
+        transition: none;
+    }
+    .loading-overlay__spinner {
+        animation: none;
+        border-top-color: var(--accent-color);
+    }
+}
